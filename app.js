@@ -5,70 +5,43 @@ const http = require("http");
 const socketio = require("socket.io");
 
 const server = http.createServer(app);
-const io = socketio(server);
 
+const io = socketio(server, {
+    cors: {
+        origin: "*", 
+        methods: ["GET", "POST"]
+    }
+});
 
 app.set("view engine", "ejs");
-
-
 app.use(express.static(path.join(__dirname, "public")));
-
 
 io.on("connection", function(socket) {
     console.log("User connected:", socket.id);
 
     socket.on("send-location", function(data) {
-        console.log("Location received:", data);
 
-        io.emit("receive-location", {
-            id: socket.id,
-            ...data
-        });
+        if (data.latitude && data.longitude) {
+            io.emit("receive-location", {
+                id: socket.id,
+                ...data
+            });
+        }
     });
 
     socket.on("disconnect", function() {
         console.log("User disconnected:", socket.id);
-
         io.emit("user-disconnected", socket.id);
     });
 });
-
 
 app.get("/", function(req, res) {
     res.render("index");
 });
 
 
-server.listen(3000, () => {
-    console.log("Server running on port 3000");
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
-
-// const express = require('express');
-// const app = express();
-// const path = require("path");
-// const http = require("http");
-
-// const socketio = require("socket.io");
-
-// const server = http.createServer(app);
-
-// const io = socketio(server);
-
-// app.set("view engine" , "ejs");
-// app.set(express.static(path.join(__dirname, "public")));
-
-// io.on("connection",function(socket){
-//     socket.on("send-location",function(data){
-//         io.emit("receive-location",{id:socket.id, ...data});
-//     });
-
-//     socket.on("disconnect",function(){
-//         io.emit("user-disconneted",socket.id);
-//     })
-// });
-
-// app.get("/",function(req,res){
-//     res.render("index");
-// })
-
-// server.listen(3000);
